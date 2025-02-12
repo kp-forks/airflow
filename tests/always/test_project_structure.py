@@ -92,8 +92,6 @@ class TestProjectStructure:
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_k8s_model.py",
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_kube_client.py",
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_kube_config.py",
-            "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_pod_generator_deprecated.py",
-            "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_pod_launcher_deprecated.py",
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_python_kubernetes_script.py",
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/test_secret.py",
             "providers/cncf/kubernetes/tests/provider_tests/cncf/kubernetes/triggers/test_kubernetes_pod.py",
@@ -555,6 +553,9 @@ class TestAmazonProviderProjectStructure(ExampleCoverageTest):
     MISSING_EXAMPLES_FOR_CLASSES = {
         # S3 Exasol transfer difficult to test, see: https://github.com/apache/airflow/issues/22632
         "airflow.providers.amazon.aws.transfers.exasol_to_s3.ExasolToS3Operator",
+        # These operations take a lot of time, there are commented out in the system tests for this reason
+        "airflow.providers.amazon.aws.operators.dms.DmsStartReplicationOperator",
+        "airflow.providers.amazon.aws.operators.dms.DmsStopReplicationOperator",
     }
 
     DEPRECATED_CLASSES = {

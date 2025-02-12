@@ -16,12 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Box, HStack } from "@chakra-ui/react";
+import { Box, HStack, Skeleton, SimpleGrid } from "@chakra-ui/react";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useDagRunServiceGetDagRuns, useTaskInstanceServiceGetTaskInstances } from "openapi/queries";
+import { DurationChart } from "src/components/DurationChart";
 import TimeRangeSelector from "src/components/TimeRangeSelector";
 import { TrendCountButton } from "src/components/TrendCountButton";
 
@@ -42,14 +43,19 @@ export const Overview = () => {
     state: ["failed"],
   });
 
-  const { data: failedRuns, isLoading: isLoadingRuns } = useDagRunServiceGetDagRuns({
+  const { data: failedRuns, isLoading: isLoadingFailedRuns } = useDagRunServiceGetDagRuns({
     dagId: dagId ?? "",
     logicalDateGte: startDate,
     logicalDateLte: endDate,
     state: ["failed"],
   });
 
-  // TODO actually link to task instances list
+  const { data: runs, isLoading: isLoadingRuns } = useDagRunServiceGetDagRuns({
+    dagId: dagId ?? "",
+    limit: 14,
+    orderBy: "-logical_date",
+  });
+
   return (
     <Box m={4}>
       <Box my={2}>
@@ -84,7 +90,7 @@ export const Overview = () => {
           events={(failedRuns?.dag_runs ?? []).map((dr) => ({
             timestamp: dr.start_date ?? dr.logical_date ?? "",
           }))}
-          isLoading={isLoadingRuns}
+          isLoading={isLoadingFailedRuns}
           label="Failed Run"
           route={{
             pathname: "runs",
@@ -93,6 +99,15 @@ export const Overview = () => {
           startDate={startDate}
         />
       </HStack>
+      <SimpleGrid columns={3} gap={5} my={5}>
+        <Box borderRadius={4} borderStyle="solid" borderWidth={1} p={2}>
+          {isLoadingRuns ? (
+            <Skeleton height="200px" w="full" />
+          ) : (
+            <DurationChart entries={runs?.dag_runs.slice().reverse()} kind="Dag Run" />
+          )}
+        </Box>
+      </SimpleGrid>
     </Box>
   );
 };
