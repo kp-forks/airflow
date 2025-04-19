@@ -466,6 +466,7 @@ decrypted
 Decrypts
 dedented
 deduplicate
+deduplicated
 deduplication
 deepcopy
 deepcopying
@@ -575,6 +576,7 @@ ecb
 ECR
 ecs
 EdDSA
+edgeexecutor
 EdgeModifier
 EdgeModifiers
 EDITMSG
@@ -842,6 +844,7 @@ idempotency
 IdP
 ie
 iframe
+iframes
 IGM
 igm
 ignorable
@@ -1105,6 +1108,7 @@ microservice
 microservices
 microsoft
 middleware
+middlewares
 Midnights
 midnights
 milli
@@ -1303,6 +1307,7 @@ podName
 PodSpec
 podSpec
 podspec
+polars
 poller
 polyfill
 pooler
@@ -1491,6 +1496,7 @@ rmse
 rmsle
 rmspe
 Roadmap
+roadmap
 Robinhood
 roc
 RoleBinding
@@ -1512,6 +1518,7 @@ RunQuerySensor
 runspace
 RunSubmitTaskSettings
 runtime
+runtimes
 SaaS
 sade
 Sagemaker
