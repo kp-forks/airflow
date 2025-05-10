@@ -23,11 +23,13 @@ from typing import TYPE_CHECKING, Any
 import httpx
 import structlog
 
+from airflowctl.api.datamodels.auth_generated import LoginBody, LoginResponse
 from airflowctl.api.datamodels.generated import (
     AssetAliasCollectionResponse,
     AssetAliasResponse,
     AssetCollectionResponse,
     AssetResponse,
+    BackfillCollectionResponse,
     BackfillPostBody,
     BackfillResponse,
     BulkActionResponse,
@@ -100,8 +102,7 @@ def _check_flag_and_exit_if_server_response_error(func):
         try:
             if self.exit_in_error:
                 return _exit_if_server_response_error(response=func(self, *args, **kwargs))
-            else:
-                return func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         except httpx.ConnectError as e:
             raise e
 
@@ -129,6 +130,23 @@ class BaseOperations:
         for attr, value in cls.__dict__.items():
             if callable(value):
                 setattr(cls, attr, _check_flag_and_exit_if_server_response_error(value))
+
+
+# Login operations
+class LoginOperations:
+    """Login operations."""
+
+    def __init__(self, client: Client):
+        self.client = client
+
+    def login_with_username_and_password(self, login: LoginBody) -> LoginResponse | ServerResponseError:
+        """Login to the API server."""
+        try:
+            return LoginResponse.model_validate_json(
+                self.client.post("/token/cli", json=login.model_dump()).content
+            )
+        except ServerResponseError as e:
+            raise e
 
 
 # Operations
@@ -176,6 +194,54 @@ class BackfillsOperations(BaseOperations):
         """Create a backfill."""
         try:
             self.response = self.client.post("backfills", data=backfill.model_dump())
+            return BackfillResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def create_dry_run(self, backfill: BackfillPostBody) -> BackfillResponse | ServerResponseError:
+        """Create a dry run backfill."""
+        try:
+            self.response = self.client.post("backfills/dry_run", data=backfill.model_dump())
+            return BackfillResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def get(self, backfill_id: str) -> BackfillResponse | ServerResponseError:
+        """Get a backfill."""
+        try:
+            self.response = self.client.get(f"backfills/{backfill_id}")
+            return BackfillResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def list(self) -> BackfillCollectionResponse | ServerResponseError:
+        """List all backfills."""
+        try:
+            self.response = self.client.get("backfills")
+            return BackfillCollectionResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def pause(self, backfill_id: str) -> BackfillResponse | ServerResponseError:
+        """Pause a backfill."""
+        try:
+            self.response = self.client.post(f"backfills/{backfill_id}/pause")
+            return BackfillResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def unpause(self, backfill_id: str) -> BackfillResponse | ServerResponseError:
+        """Unpause a backfill."""
+        try:
+            self.response = self.client.post(f"backfills/{backfill_id}/unpause")
+            return BackfillResponse.model_validate_json(self.response.content)
+        except ServerResponseError as e:
+            raise e
+
+    def cancel(self, backfill_id: str) -> BackfillResponse | ServerResponseError:
+        """Cancel a backfill."""
+        try:
+            self.response = self.client.post(f"backfills/{backfill_id}/cancel")
             return BackfillResponse.model_validate_json(self.response.content)
         except ServerResponseError as e:
             raise e

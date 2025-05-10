@@ -147,7 +147,7 @@ class TestAssetModelOperation:
             # Update `is_active` and `is_paused` properties from DAG
             dags = session.query(DagModel).all()
             for dag in dags:
-                dag.is_active = is_active
+                dag.is_stale = not is_active
                 dag.is_paused = is_paused
 
             orm_assets = asset_op.sync_assets(session=session)
@@ -567,6 +567,36 @@ class TestUpdateDagParsingResults:
         import_errors = set(session.execute(select(ParseImportError.filename, ParseImportError.bundle_name)))
 
         assert import_errors == {("def.py", bundle_name)}
+
+    def test_remove_error_updates_loaded_dag_model(self, testing_dag_bundle, session):
+        bundle_name = "testing"
+        filename = "abc.py"
+        session.add(
+            ParseImportError(
+                filename=filename,
+                bundle_name=bundle_name,
+                timestamp=tz.utcnow(),
+                stacktrace="Some error",
+            )
+        )
+        session.add(
+            ParseImportError(
+                filename="def.py",
+                bundle_name=bundle_name,
+                timestamp=tz.utcnow(),
+                stacktrace="Some error",
+            )
+        )
+        session.flush()
+        dag = DAG(dag_id="test")
+        dag.fileloc = filename
+        import_errors = {filename: "Some error"}
+        update_dag_parsing_results_in_db(bundle_name, None, [dag], import_errors, set(), session)
+        dag_model = session.get(DagModel, (dag.dag_id,))
+        assert dag_model.has_import_errors is True
+        import_errors = {}
+        update_dag_parsing_results_in_db(bundle_name, None, [dag], import_errors, set(), session)
+        assert dag_model.has_import_errors is False
 
     @pytest.mark.parametrize(
         ("attrs", "expected"),

@@ -31,7 +31,8 @@ from botocore.exceptions import ClientError, NoCredentialsError
 
 from airflow.decorators import task
 from airflow.providers.amazon.aws.hooks.ssm import SsmHook
-from airflow.utils.state import State
+from airflow.providers.amazon.version_compat import AIRFLOW_V_3_0_PLUS
+from airflow.utils.state import DagRunState, State
 from airflow.utils.trigger_rule import TriggerRule
 
 if TYPE_CHECKING:
@@ -112,13 +113,13 @@ def _fetch_from_ssm(key: str, test_name: str | None = None) -> str:
         log.info("No boto credentials found: %s", e)
     except ClientError as e:
         log.info("Client error when connecting to SSM: %s", e)
-    except hook.conn.exceptions.ParameterNotFound as e:
-        log.info("SSM does not contain any parameter for this test: %s", e)
     except KeyError as e:
         log.info(
             "SSM contains one parameter for this test, but not the requested value: %s",
             e,
         )
+    except Exception as e:
+        log.info("SSM does not contain any parameter for this test: %s", e)
     return value
 
 
@@ -279,6 +280,14 @@ def set_env_id() -> str:
 
 
 def all_tasks_passed(ti) -> bool:
+    if AIRFLOW_V_3_0_PLUS:
+        # If the test is being run with task SDK, ti is an instance of RuntimeTaskInstance
+        # This is the case when executed with an executor
+        from airflow.sdk.execution_time.task_runner import RuntimeTaskInstance
+
+        if isinstance(ti, RuntimeTaskInstance):
+            return RuntimeTaskInstance.get_dagrun_state(ti.dag_id, ti.run_id) != DagRunState.FAILED
+
     task_runs = ti.get_dagrun().get_task_instances()
     return all([_task.state != State.FAILED for _task in task_runs])
 

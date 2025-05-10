@@ -35,6 +35,7 @@ __all__ = [
     "EdgeModifier",
     "Label",
     "Metadata",
+    "ObjectStoragePath",
     "Param",
     "PokeReturnValue",
     "TaskGroup",
@@ -54,7 +55,7 @@ __all__ = [
     "teardown",
 ]
 
-__version__ = "1.0.0.alpha1"
+__version__ = "1.1.0"
 
 if TYPE_CHECKING:
     from airflow.sdk.bases.notifier import BaseNotifier
@@ -75,6 +76,7 @@ if TYPE_CHECKING:
     from airflow.sdk.definitions.template import literal
     from airflow.sdk.definitions.variable import Variable
     from airflow.sdk.definitions.xcom_arg import XComArg
+    from airflow.sdk.io.path import ObjectStoragePath
 
 __lazy_imports: dict[str, str] = {
     "Asset": ".definitions.asset",
@@ -82,7 +84,7 @@ __lazy_imports: dict[str, str] = {
     "AssetAll": ".definitions.asset",
     "AssetAny": ".definitions.asset",
     "AssetWatcher": ".definitions.asset",
-    "BaseNotifier": ".definitions.notifier",
+    "BaseNotifier": ".bases.notifier",
     "BaseOperator": ".bases.operator",
     "BaseOperatorLink": ".bases.operatorlink",
     "BaseSensorOperator": ".bases.sensor",
@@ -92,8 +94,10 @@ __lazy_imports: dict[str, str] = {
     "EdgeModifier": ".definitions.edges",
     "Label": ".definitions.edges",
     "Metadata": ".definitions.asset.metadata",
+    "ObjectStoragePath": ".io.path",
     "Param": ".definitions.param",
     "PokeReturnValue": ".bases.sensor",
+    "SecretCache": ".execution_time.cache",
     "TaskGroup": ".definitions.taskgroup",
     "Variable": ".definitions.variable",
     "XComArg": ".definitions.xcom_arg",

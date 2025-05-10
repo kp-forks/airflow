@@ -31,7 +31,7 @@ import logging
 import traceback
 from typing import TYPE_CHECKING, NamedTuple
 
-from sqlalchemy import delete, func, insert, select, tuple_
+from sqlalchemy import delete, func, insert, select, tuple_, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import joinedload, load_only
 
@@ -296,9 +296,16 @@ def _update_import_errors(
                 get_listener_manager().hook.on_new_dag_import_error(filename=filename, stacktrace=stacktrace)
             except Exception:
                 log.exception("error calling listener")
-        session.query(DagModel).filter(
-            DagModel.fileloc == filename, DagModel.bundle_name == bundle_name
-        ).update({"has_import_errors": True})
+        session.execute(
+            update(DagModel)
+            .where(DagModel.fileloc == filename)
+            .values(
+                has_import_errors=True,
+                bundle_name=bundle_name,
+                is_stale=True,
+            )
+            .execution_options(synchronize_session="fetch")
+        )
 
 
 def update_dag_parsing_results_in_db(
@@ -431,7 +438,7 @@ class DagModelOperation(NamedTuple):
             dm.fileloc = dag.fileloc
             dm.relative_fileloc = dag.relative_fileloc
             dm.owners = dag.owner or conf.get("operators", "default_owner")
-            dm.is_active = True
+            dm.is_stale = False
             dm.has_import_errors = False
             dm.last_parsed_time = utcnow()
             if hasattr(dag, "_dag_display_property_value"):
@@ -573,7 +580,7 @@ def _find_active_assets(name_uri_assets: Iterable[tuple[str, str]], session: Ses
                 tuple_(AssetModel.name, AssetModel.uri).in_(name_uri_assets),
                 AssetModel.active.has(),
                 AssetModel.consuming_dags.any(
-                    DagScheduleAssetReference.dag.has(DagModel.is_active & ~DagModel.is_paused)
+                    DagScheduleAssetReference.dag.has(~DagModel.is_stale & ~DagModel.is_paused)
                 ),
             )
         )

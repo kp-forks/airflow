@@ -1,3 +1,5 @@
+/* eslint-disable max-lines */
+
 /*!
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -24,6 +26,7 @@ import { Link as RouterLink, useParams, useSearchParams } from "react-router-dom
 import { useDagRunServiceGetDagRuns } from "openapi/queries";
 import type { DAGRunResponse, DagRunState, DagRunType } from "openapi/requests/types.gen";
 import { ClearRunButton } from "src/components/Clear";
+import { DagVersion } from "src/components/DagVersion";
 import { DataTable } from "src/components/DataTable";
 import { useTableURLState } from "src/components/DataTable/useTableUrlState";
 import { ErrorAlert } from "src/components/ErrorAlert";
@@ -35,6 +38,7 @@ import Time from "src/components/Time";
 import { Select } from "src/components/ui";
 import { SearchParamsKeys, type SearchParamsKeysType } from "src/constants/searchParams";
 import { dagRunTypeOptions, dagRunStateOptions as stateOptions } from "src/constants/stateOptions";
+import DeleteRunButton from "src/pages/DeleteRunButton";
 import { capitalize, getDuration, useAutoRefresh, isStatePending } from "src/utils";
 
 type DagRunRow = { row: { original: DAGRunResponse } };
@@ -50,7 +54,7 @@ const runColumns = (dagId?: string): Array<ColumnDef<DAGRunResponse>> => [
     ? []
     : [
         {
-          accessorKey: "dag_id",
+          accessorKey: "dag_display_name",
           enableSorting: false,
           header: "Dag ID",
         },
@@ -104,7 +108,10 @@ const runColumns = (dagId?: string): Array<ColumnDef<DAGRunResponse>> => [
     accessorKey: "dag_versions",
     cell: ({ row: { original } }) => (
       <LimitedItemsList
-        items={original.dag_versions.map(({ version_number: versionNumber }) => `v${versionNumber}`)}
+        items={original.dag_versions.map((version) => (
+          <DagVersion key={version.id} version={version} />
+        ))}
+        maxItems={4}
       />
     ),
     enableSorting: false,
@@ -116,6 +123,7 @@ const runColumns = (dagId?: string): Array<ColumnDef<DAGRunResponse>> => [
       <Flex justifyContent="end">
         <ClearRunButton dagRun={row.original} withText={false} />
         <MarkRunAsButton dagRun={row.original} withText={false} />
+        <DeleteRunButton dagRun={row.original} withText={false} />
       </Flex>
     ),
     enableSorting: false,
